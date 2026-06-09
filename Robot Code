@@ -1,0 +1,141 @@
+from machine import Pin, ADC
+from time import sleep
+import time
+
+
+
+irL = ADC(26)
+irM = ADC(27)
+irR = ADC(28)
+
+
+
+led = Pin("LED", Pin.OUT)
+
+
+
+samples = 10
+
+print("Calibrating...")
+
+led.on()
+
+sumTable = 0
+sumTape = 0
+
+for i in range(samples):
+
+    
+    sumTable += irL.read_u16()
+    sumTable += irR.read_u16()
+
+    
+    sumTape += irM.read_u16()
+
+    sleep(0.2)
+
+meanTable = sumTable / (samples * 2)
+meanTape = sumTape / samples
+
+threshold = (meanTable + meanTape) / 2
+
+print("Done Calibrating!")
+print(f"Table: {meanTable}")
+print(f"Tape : {meanTape}")
+print(f"Threshold: {threshold}")
+
+led.off()
+
+
+for i in range(3):
+    led.on()
+    sleep(0.2)
+    led.off()
+    sleep(0.2)
+
+
+left_forward = Pin(12, Pin.OUT)
+left_backward = Pin(11, Pin.OUT)
+
+
+right_forward = Pin(9, Pin.OUT)
+right_backward = Pin(10, Pin.OUT)
+
+
+
+def stop():
+
+    left_forward.off()
+    left_backward.off()
+
+    right_forward.off()
+    right_backward.off()
+
+
+def forward():
+
+    left_forward.on()
+    left_backward.off()
+
+    right_forward.on()
+    right_backward.off()
+
+
+
+
+
+def left():
+
+    
+    left_forward.off()
+    left_backward.off()
+
+    
+    right_forward.on()
+    right_backward.off()
+
+
+def right():
+
+    
+    left_forward.on()
+    left_backward.off()
+
+    
+    right_forward.off()
+    right_backward.off()
+
+
+
+while True:
+    
+    L = irL.read_u16()
+    M = irM.read_u16()
+    R = irR.read_u16()
+    
+    
+    print("L:", L, "M:", M, "R:", R)
+    
+    
+    if M > threshold and L > threshold and R > threshold:
+        stop()
+        
+    elif M > threshold :
+        forward()
+
+    
+    elif L > threshold :
+        left()
+        
+    elif R > threshold:
+        right()
+        
+    
+    
+
+    sleep(0.01)
+    
+
+    
+
+
